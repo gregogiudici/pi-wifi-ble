@@ -20,14 +20,20 @@ Requirements: Raspberry Pi OS **Bookworm or newer** (uses NetworkManager), Wi-Fi
 ```bash
 git clone https://github.com/<you>/pi-wifi-ble.git
 cd pi-wifi-ble/pi
-sudo ./install.sh
+sudo ./install.sh                        # Bluetooth MIDI on the Pi is turned OFF
+# or
+sudo WIFI_BLE_KEEP_MIDI=1 ./install.sh   # keep Bluetooth MIDI (pair each Mac once)
 ```
 
 The installer:
 - installs `bluez python3-dbus python3-gi python3-cryptography`
 - copies `wifi_ble.py` to `/opt/wifi-ble/` and `wifi-ble.service` to `/etc/systemd/system/`
 - creates `/etc/wifi-ble/config.json` (mode 600) with a **random secret** and prints it
+- by default **turns off Bluetooth MIDI** on the Pi, so Macs don't get disconnected after 30 s.
+  Use `WIFI_BLE_KEEP_MIDI=1` to keep it. See [Bluetooth MIDI and the 30-second disconnect](#5-bluetooth-midi-and-the-30-second-disconnect)
 - enables and starts the service
+
+Running `install.sh` again switches between the two modes; `uninstall.sh` always turns Bluetooth MIDI back on.
 
 `/etc/wifi-ble/config.json`:
 
@@ -106,12 +112,93 @@ use something equally long.
 - **Pi doesn't show up in the chooser**: `journalctl -u wifi-ble` should say `advertising as 'PiWiFi'`.
   Check `rfkill list` (unblock with `sudo rfkill unblock bluetooth`) and `bluetoothctl show`.
   A `name` that's too long can cause `RegisterAdvertisement failed`.
+- **Connection drops after about 30 s (usually from a Mac)**: see
+  [Bluetooth MIDI and the 30-second disconnect](#5-bluetooth-midi-and-the-30-second-disconnect).
 - **"Wrong secret"**: compare with `sudo cat /etc/wifi-ble/config.json`. Spaces at the ends are ignored.
 - **Scan finds nothing**: the WLAN country is not set, or Wi-Fi is blocked (`rfkill list`, `nmcli radio wifi on`).
 - **Joining fails with "Secrets were required"**: the password is wrong.
 - **Changing UUIDs**: change them in both `pi/wifi_ble.py` and `docs/app.js`.
 - **Debug logs**: add `-v` to `ExecStart` in the unit file, then `sudo systemctl daemon-reload && sudo systemctl restart wifi-ble`.
   To watch raw Bluetooth traffic: `sudo btmon`.
+
+## 5. Bluetooth MIDI and the 30-second disconnect
+
+**Symptom:** the web app connects and works, then says *Bluetooth connection closed* about 30 s
+later, every time. `journalctl -u wifi-ble` shows `client disconnected` roughly 30 s after `client hello`.
+It mostly happens with **Macs**.
+
+**Why:** macOS exposes a Bluetooth LE MIDI service. Raspberry Pi OS has two components that
+automatically use any BLE MIDI device that connects:
+
+| Component | Log hint |
+|---|---|
+| BlueZ MIDI plugin (`bluetoothd`) | `journalctl -u bluetooth`: `MIDI I/O: Failed to read initial request` |
+| PipeWire / WirePlumber `monitor.bluez-midi` | none (visible only in `sudo btmon`) |
+
+They try to read the Mac's MIDI characteristic. The Mac refuses until the two devices are paired,
+so pairing starts. Web Bluetooth never handles pairing, and on a headless Pi nobody confirms the
+request, so after the Bluetooth pairing timeout (30 s) the link is dropped. `wifi_ble.py` is not involved.
+In `sudo btmon` you can see `Insufficient Authentication`, then `SMP: Security Request` / `Pairing Request`,
+and a disconnect 30 s later.
+
+There are two fixes. Pick one:
+
+### Option A: turn Bluetooth MIDI off (installer default)
+
+Use this if the Pi never needs Bluetooth MIDI instruments. Any computer can then connect without pairing.
+
+```bash
+sudo ./install.sh
+```
+
+It creates two files (`uninstall.sh` or `WIFI_BLE_KEEP_MIDI=1 ./install.sh` removes them):
+
+- `/etc/systemd/system/bluetooth.service.d/wifi-ble-nomidi.conf`: starts `bluetoothd --noplugin=midi`
+- `/etc/wireplumber/wireplumber.conf.d/90-wifi-ble-no-bluez-midi.conf`: `monitor.bluez-midi = disabled`
+
+Check: `ps -o args= -C bluetoothd` shows `--noplugin=midi`, and `journalctl -u bluetooth` shows `Excluding (cli) midi`.
+
+USB MIDI is not affected, only Bluetooth MIDI.
+
+### Option B: keep Bluetooth MIDI and pair each Mac once
+
+Use this if the Pi uses Bluetooth MIDI devices.
+
+```bash
+sudo WIFI_BLE_KEEP_MIDI=1 ./install.sh
+```
+
+Then pair each computer that shows the problem **once**. The pairing is remembered on both sides;
+after it, the MIDI read succeeds over an encrypted link and nothing times out.
+
+On the Pi (over SSH or a terminal):
+
+```
+$ bluetoothctl
+[bluetooth]# agent on
+[bluetooth]# default-agent
+```
+
+Now connect from the web app on the Mac. Within a few seconds:
+
+- the Pi prints `Confirm passkey 123456 (yes/no):`: type `yes`
+- the Mac may show a pairing request with the same number: accept it
+
+Then, still in `bluetoothctl`:
+
+```
+[bluetooth]# devices                      # find the Mac's address
+[bluetooth]# trust D0:11:E5:XX:XX:XX
+[bluetooth]# quit
+```
+
+With the Raspberry Pi desktop, you can accept the pairing pop-up on the Pi's screen (or over VNC) instead.
+
+Check: `bluetoothctl info <address>` shows `Paired: yes`, `Bonded: yes` and `Trusted: yes`.
+To undo: `bluetoothctl remove <address>` on the Pi, and remove the Pi from the Mac's Bluetooth settings.
+
+If a pairing goes wrong (for example the Mac was paired and then removed on one side only), remove
+it on **both** sides and pair again.
 
 ## Layout
 

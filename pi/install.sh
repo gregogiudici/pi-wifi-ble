@@ -39,10 +39,53 @@ EOF
 )
 fi
 
+# Bluetooth MIDI vs. Mac clients (see README, "Bluetooth MIDI and the 30-second disconnect"):
+# macOS exposes a BLE MIDI service. When a Mac connects, BlueZ's MIDI plugin and WirePlumber's
+# BLE MIDI monitor try to use it, the Mac asks to pair, nobody confirms it on the Pi and the
+# link is dropped after the 30 s pairing timeout. By default we turn Bluetooth MIDI off.
+# Set WIFI_BLE_KEEP_MIDI=1 to keep it (then pair each Mac with the Pi once).
+BLUEZ_DROPIN=/etc/systemd/system/bluetooth.service.d/wifi-ble-nomidi.conf
+WP_CONF=/etc/wireplumber/wireplumber.conf.d/90-wifi-ble-no-bluez-midi.conf
+if [[ "${WIFI_BLE_KEEP_MIDI:-0}" == 1 ]]; then
+  echo "==> Keeping Bluetooth MIDI (WIFI_BLE_KEEP_MIDI=1)"
+  rm -f "$BLUEZ_DROPIN" "$WP_CONF"
+  rmdir "$(dirname "$BLUEZ_DROPIN")" 2>/dev/null || true
+else
+  echo "==> Disabling Bluetooth MIDI (set WIFI_BLE_KEEP_MIDI=1 to keep it)"
+  BLUETOOTHD=$(systemctl show -p ExecStart --value bluetooth.service | sed -n 's/.*path=\([^ ;]*\).*/\1/p')
+  BLUETOOTHD=${BLUETOOTHD:-/usr/libexec/bluetooth/bluetoothd}
+  install -d -m 755 "$(dirname "$BLUEZ_DROPIN")"
+  cat > "$BLUEZ_DROPIN" <<EOF
+# Installed by wifi-ble: disable BlueZ's Bluetooth MIDI plugin.
+# Otherwise bluetoothd tries to pair with Macs and Web Bluetooth connections drop after 30 s.
+[Service]
+ExecStart=
+ExecStart=${BLUETOOTHD} --noplugin=midi
+EOF
+  if command -v wireplumber >/dev/null; then
+    install -d -m 755 "$(dirname "$WP_CONF")"
+    cat > "$WP_CONF" <<'EOF'
+# Installed by wifi-ble: disable WirePlumber's Bluetooth MIDI monitor.
+# Otherwise it tries to pair with Macs and Web Bluetooth connections drop after 30 s.
+wireplumber.profiles = {
+  main = {
+    monitor.bluez-midi = disabled
+  }
+}
+EOF
+  fi
+fi
+
 echo "==> Enabling Bluetooth and the service"
 rfkill unblock bluetooth || true
 systemctl daemon-reload
 systemctl enable bluetooth.service
+systemctl restart bluetooth.service
+# WirePlumber runs per user session; restart it for every logged-in user.
+for uid in $(loginctl list-users --no-legend 2>/dev/null | awk '{print $1}'); do
+  user=$(id -nu "$uid" 2>/dev/null) || continue
+  sudo -u "$user" XDG_RUNTIME_DIR="/run/user/$uid" systemctl --user try-restart wireplumber.service 2>/dev/null || true
+done
 systemctl enable --now wifi-ble.service
 systemctl restart wifi-ble.service
 
