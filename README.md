@@ -1,5 +1,11 @@
 # pi-wifi-ble
 
+<p align="center">
+  <a href="https://gregogiudici.github.io/pi-wifi-ble/">
+    <img src="https://img.shields.io/badge/%F0%9F%9A%80%20Open%20the%20web%20app-gregogiudici.github.io%2Fpi--wifi--ble-2ea44f?style=for-the-badge" alt="Open the web app">
+  </a>
+</p>
+
 Check and change a Raspberry Pi 5's Wi-Fi from your phone or laptop over **Bluetooth LE**,
 using a static web page (GitHub Pages) and **Web Bluetooth**. No network connection to the Pi needed.
 
@@ -11,6 +17,9 @@ What the web app can do:
 - show hostname, Wi-Fi state, current SSID and signal, and **all IP addresses** (wlan0, eth0, …)
 - scan for networks and join one (including hidden networks, WPA2/WPA3)
 - list saved networks, switch to one, forget one
+
+> **Try it now:** [gregogiudici.github.io/pi-wifi-ble](https://gregogiudici.github.io/pi-wifi-ble/)
+> (needs a Web Bluetooth browser, see [Browser support](#browser-support), and a Pi already set up with [step 1](#1-pi-setup))
 
 ## 1. Pi setup
 
