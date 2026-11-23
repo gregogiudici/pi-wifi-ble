@@ -18,9 +18,6 @@ What the web app can do:
 - scan for networks and join one (including hidden networks, WPA2/WPA3)
 - list saved networks, switch to one, forget one
 
-> **Try it now:** [gregogiudici.github.io/pi-wifi-ble](https://gregogiudici.github.io/pi-wifi-ble/)
-> (needs a Web Bluetooth browser, see [Browser support](#browser-support), and a Pi already set up with [step 1](#1-pi-setup))
-
 ## 1. Pi setup
 
 Requirements: Raspberry Pi OS **Bookworm or newer** (uses NetworkManager), Wi-Fi country set
@@ -67,6 +64,9 @@ sudo ./uninstall.sh
 ```
 
 ## 2. Web app on GitHub Pages
+
+> **Try it now:** [gregogiudici.github.io/pi-wifi-ble](https://gregogiudici.github.io/pi-wifi-ble/)
+> (needs a Web Bluetooth browser, see [Browser support](#browser-support), and a Pi already set up with [step 1](#1-pi-setup))
 
 The web app is in `docs/` (plain HTML/CSS/JS, no build step).
 
