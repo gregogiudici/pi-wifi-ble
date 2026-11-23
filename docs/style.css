@@ -1,0 +1,77 @@
+:root {
+  --bg: #f4f5f7; --card: #fff; --text: #1d2026; --muted: #6b7280; --line: #e3e5e9;
+  --accent: #c51a4a; --accent-text: #fff; --ok: #157f3b; --err: #b42318;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #121417; --card: #1b1e23; --text: #e8eaed; --muted: #9aa0a8; --line: #2c3037; --accent: #e2386a; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 1.6rem; margin: 0 0 4px; }
+h2 { font-size: 1.1rem; margin: 0; }
+.muted { color: var(--muted); font-weight: normal; }
+header p { margin: 0 0 20px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.card > h2 { margin-bottom: 12px; }
+.row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+.grow { flex: 1; }
+.buttons { margin-top: 12px; }
+label { display: block; font-size: .9rem; color: var(--muted); margin-bottom: 8px; }
+label.check { display: flex; gap: 8px; align-items: center; color: var(--text); }
+input:not([type=checkbox]) { display: block; width: 100%; margin-top: 4px; padding: 10px 12px; font: inherit;
+  color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--card); color: var(--text); cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:disabled { opacity: .55; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button.danger { color: var(--err); }
+button.link { border: 0; background: none; padding: 0 4px; color: var(--accent); font-size: .85rem; }
+
+body:not(.connected) .only-connected { display: none; }
+body.connected #connect { display: none; }
+body.connected #reconnect { display: none; }
+body.connected #secret, body.connected #remember { pointer-events: none; opacity: .6; }
+
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0; }
+dt { color: var(--muted); }
+dd { margin: 0; overflow-wrap: anywhere; }
+code { font: .95rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.net { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-top: 1px solid var(--line); }
+.net:first-child { border-top: 0; }
+#networks .net { cursor: pointer; border-radius: 6px; }
+#networks .net:hover, #networks .net:focus { background: var(--bg); outline: none; }
+.ssid { flex: 1; overflow-wrap: anywhere; }
+.net.active .ssid { font-weight: 600; }
+.sec { font-size: .8rem; color: var(--muted); }
+.tag { font-size: .75rem; padding: 1px 8px; border-radius: 99px; background: var(--ok); color: #fff; }
+.actions { display: flex; gap: 6px; }
+.actions button { padding: 4px 10px; font-size: .9rem; }
+
+.bars { display: inline-flex; gap: 2px; align-items: end; height: 14px; vertical-align: middle; }
+.bars i { width: 4px; background: var(--line); border-radius: 1px; }
+.bars i:nth-child(1) { height: 25%; } .bars i:nth-child(2) { height: 50%; }
+.bars i:nth-child(3) { height: 75%; } .bars i:nth-child(4) { height: 100%; }
+.bars i.on { background: var(--text); }
+
+.banner { background: #fff4e5; color: #7a4100; border: 1px solid #f5c98b; border-radius: 10px; padding: 12px 14px; }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text);
+  width: min(420px, calc(100vw - 32px)); padding: 20px; }
+dialog::backdrop { background: rgb(0 0 0 / .45); }
+dialog h2 { margin-bottom: 14px; }
+dialog .buttons { justify-content: flex-end; }
+
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 150%); max-width: calc(100vw - 32px);
+  padding: 10px 16px; border-radius: 10px; background: var(--text); color: var(--bg); transition: transform .25s; }
+.toast.show { transform: translate(-50%, 0); }
+.toast.error { background: var(--err); color: #fff; }
+.toast.ok { background: var(--ok); color: #fff; }
+footer { font-size: .85rem; text-align: center; margin-top: 24px; }

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pi Wi-Fi over Bluetooth</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Pi Wi-Fi <span class="muted">over Bluetooth</span></h1>
+      <p class="muted">Check and change your Raspberry Pi's Wi-Fi without a network connection.</p>
+    </header>
+
+    <p id="unsupported" class="banner" hidden>
+      This browser doesn't support Web Bluetooth. Use Chrome or Edge on Android, Windows, macOS,
+      ChromeOS or Linux. On iPhone/iPad use the Bluefy browser.
+    </p>
+
+    <section class="card" id="connect-card">
+      <div class="row">
+        <label class="grow">Secret
+          <input id="secret" type="password" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX">
+        </label>
+      </div>
+      <label class="check"><input id="remember" type="checkbox"> Remember on this device</label>
+      <div class="row buttons">
+        <button id="connect" type="button" class="primary">Find Pi…</button>
+        <button id="reconnect" type="button" hidden>Reconnect</button>
+        <button id="disconnect" type="button" class="only-connected">Disconnect</button>
+      </div>
+    </section>
+
+    <section class="card only-connected">
+      <div class="card-head">
+        <h2>Status <span id="device-name" class="muted"></span></h2>
+        <button id="refresh" type="button">Refresh</button>
+      </div>
+      <dl id="status"></dl>
+    </section>
+
+    <section class="card only-connected">
+      <div class="card-head">
+        <h2>Networks nearby</h2>
+        <div>
+          <button id="hidden-btn" type="button">Hidden…</button>
+          <button id="scan" type="button" class="primary">Scan</button>
+        </div>
+      </div>
+      <ul id="networks" class="list"><li class="muted">Press Scan to look for networks.</li></ul>
+    </section>
+
+    <section class="card only-connected">
+      <h2>Saved networks</h2>
+      <ul id="saved" class="list"></ul>
+    </section>
+
+    <footer class="muted">All traffic is encrypted with your secret. Nothing leaves your browser except to the Pi.</footer>
+  </main>
+
+  <dialog id="join">
+    <form id="join-form">
+      <h2 id="join-title">Join network</h2>
+      <label>Network name <input id="join-ssid" required maxlength="32" autocomplete="off"></label>
+      <div id="join-psk-row">
+        <label>Password <input id="join-psk" type="password" autocomplete="off" minlength="8" maxlength="64"></label>
+        <label class="check"><input id="join-show" type="checkbox"> Show password</label>
+      </div>
+      <label class="check" id="join-hidden-row"><input id="join-hidden" type="checkbox" checked> Hidden network</label>
+      <div class="row buttons">
+        <button type="button" id="join-cancel">Cancel</button>
+        <button type="submit" class="primary">Connect</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
